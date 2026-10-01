@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Ứng dụng Flashcard học từ vựng tiếng Anh thông minh với AI Gemini - Dịch, định nghĩa và ví dụ tự động">
+    <title>VocabFlash - Học Từ Vựng Tiếng Anh Thông Minh</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Libraries for parsing files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header" id="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                    </svg>
+                </div>
+                <h1>VocabFlash</h1>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-ghost" id="btn-api-settings" title="Cài đặt API Key" style="display:none;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                    <span>API Key</span>
+                </button>
+                <div class="word-counter" id="word-counter">
+                    <span class="counter-number" id="counter-number">0</span>
+                    <span class="counter-label">từ vựng</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- API Key Modal -->
+    <div class="modal-overlay" id="modal-api">
+        <div class="modal" id="modal-api-content">
+            <div class="modal-header">
+                <h2>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                    </svg>
+                    Cài đặt Gemini API Key
+                </h2>
+                <button class="modal-close" id="modal-api-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Nhập API Key của Google Gemini để sử dụng tính năng dịch tự động, định nghĩa và ví dụ cho từ vựng.</p>
+                <div class="input-group">
+                    <label for="gemini-api-key">Gemini API Key</label>
+                    <div class="input-with-icon">
+                        <input type="password" id="gemini-api-key" placeholder="Nhập API Key của bạn tại đây..." autocomplete="off">
+                        <button class="toggle-visibility" id="toggle-api-visibility" title="Hiện/Ẩn API Key">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <small class="input-hint">Lấy API Key tại <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener">Google AI Studio</a></small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-cancel-api">Hủy</button>
+                <button class="btn btn-primary" id="btn-save-api">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                        <polyline points="17 21 17 13 7 13 7 21"/>
+                        <polyline points="7 3 7 8 15 8"/>
+                    </svg>
+                    Lưu API Key
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Word Modal -->
+    <div class="modal-overlay" id="modal-add-word">
+        <div class="modal" id="modal-add-word-content">
+            <div class="modal-header">
+                <h2>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Thêm Từ Vựng Mới
+                </h2>
+                <button class="modal-close" id="modal-add-word-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="new-word-input">Từ tiếng Anh</label>
+                    <input type="text" id="new-word-input" placeholder="Nhập từ tiếng Anh, ví dụ: serendipity" autocomplete="off">
+                </div>
+                <div class="input-group">
+                    <label for="new-words-bulk">Hoặc nhập nhiều từ (mỗi từ một dòng)</label>
+                    <textarea id="new-words-bulk" rows="4" placeholder="hello&#10;world&#10;beautiful&#10;..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-cancel-add-word">Hủy</button>
+                <button class="btn btn-primary" id="btn-confirm-add-word">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Thêm từ
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero / Empty State -->
+        <section class="hero-section" id="hero-section">
+            <div class="hero-content">
+                <div class="hero-badge">✨ Powered by Gemini AI</div>
+                <h2 class="hero-title">Học Từ Vựng Tiếng Anh<br><span class="gradient-text">Thông Minh & Hiệu Quả</span></h2>
+                <p class="hero-description">Upload danh sách từ vựng hoặc thêm từ mới để bắt đầu. AI sẽ tự động dịch, đưa ra định nghĩa và ví dụ cho mỗi từ.</p>
+                <div class="hero-actions">
+                    <label class="btn btn-primary btn-lg" for="file-upload" id="btn-upload-hero">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                        Upload File Từ Vựng
+                    </label>
+                    <input type="file" id="file-upload" accept=".txt,.csv,.tsv,.md,.srt,.vtt,.docx,.pdf,.apkg,.colpkg" hidden>
+                    <button class="btn btn-outline btn-lg" id="btn-add-word-hero">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Thêm Từ Thủ Công
+                    </button>
+                </div>
+                <div class="hero-file-info">
+                    <p>Hỗ trợ: <strong>.txt, .csv, .tsv, .md, .srt, .vtt, .docx, .pdf, .apkg, .colpkg</strong></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Toolbar (shown when cards exist) -->
+        <section class="toolbar" id="toolbar">
+            <div class="toolbar-left">
+                <label class="btn btn-primary btn-sm" for="file-upload-toolbar" id="btn-upload-toolbar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    Upload thêm
+                </label>
+                <input type="file" id="file-upload-toolbar" accept=".txt,.csv,.tsv,.md,.srt,.vtt,.docx,.pdf,.apkg,.colpkg" hidden>
+                <button class="btn btn-outline btn-sm" id="btn-add-word-toolbar">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"/>
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                    </svg>
+                    Thêm từ
+                </button>
+                <button class="btn btn-danger btn-sm" id="btn-clear-all">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                    </svg>
+                    Xóa tất cả
+                </button>
+            </div>
+            <div class="toolbar-right">
+                <div class="search-box">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"/>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                    <input type="text" id="search-input" placeholder="Tìm kiếm từ vựng...">
+                </div>
+            </div>
+        </section>
+
+        <!-- Flashcard Grid -->
+        <section class="flashcard-grid" id="flashcard-grid">
+            <!-- Cards will be dynamically inserted here -->
+        </section>
+
+        <!-- Loading indicator -->
+        <div class="loading-overlay" id="loading-overlay">
+            <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <p class="loading-text" id="loading-text">Đang xử lý...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
